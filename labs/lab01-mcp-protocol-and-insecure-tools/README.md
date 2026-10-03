@@ -21,8 +21,8 @@ The MCP server must treat them as untrusted input, exactly like a web endpoint.
 |---|---|
 | `src/server.py` | **Vulnerable** notes server: `list_notes`, `read_note`, `search_notes` |
 | `src/server_secure.py` | Same server, **fixed** |
-| `src/client.py` | Minimal JSON-RPC client (no SDK) with `handshake` and `exploit` scenarios |
-| `data/notes/` | Legitimate notes |
+| `src/client.py` | Minimal JSON-RPC client (no SDK) with `handshake`, `exploit`, `interactive`, `compare` scenarios |
+| `data/notes/` | Legitimate notes (3 of them) |
 | `data/secret.txt` | **Fictitious** secret (`FLAG{...}` canary) located outside the notes directory |
 | `logs/` | `.jsonl` trace of every run |
 
@@ -36,6 +36,8 @@ cp .env.example .env              # MCP_SERVER=vulnerable | secure
 docker compose build
 docker compose run --rm lab01                        # handshake (default)
 docker compose run --rm lab01 --scenario exploit
+docker compose run --rm lab01 --scenario interactive
+docker compose run --rm lab01 --scenario compare
 ```
 
 Logs are written to `./logs/` as uid 1000. If your user is not 1000, adjust `user:` in the compose file.
@@ -50,13 +52,26 @@ MCP_SERVER=vulnerable uv run python src/client.py --scenario exploit
 
 Note: when run locally, the vulnerable server runs on your machine. The payloads only read the fictitious file, but prefer Docker.
 
+## Scenarios
+
+| Scenario | What it does |
+|---|---|
+| `handshake` | Lifecycle: `initialize` → `notifications/initialized` → `tools/list` → `tools/call` |
+| `exploit` | Path traversal + command injection against `MCP_SERVER` |
+| `interactive` | REPL: pick a tool and type arguments, watch the raw JSON-RPC round-trip |
+| `compare` | Run the same attacks against both servers, side-by-side verdict table |
+
+`--show-secret` prints the canary-leak summary after `exploit` or `compare`.
+
 ## Exercises
 
 1. **Handshake.** Run the `handshake` scenario and answer: which capabilities does the server announce? Why does `notifications/initialized` carry no `id`? Which field of `tools/list` would an LLM read to decide which tool to use?
 2. **Path traversal.** Run `exploit` against `MCP_SERVER=vulnerable`. Which argument lets you escape `data/notes/`? Also try an absolute path (`/etc/passwd`) by editing the payload.
 3. **Command injection.** Look at how the `grep` command line is built in `server.py`. Why does the payload need `;` and `#`?
 4. **Fix.** Switch to `MCP_SERVER=secure` and repeat. Read `server_secure.py`: what do `resolve()` and `is_relative_to()` do? Why is removing the shell better than filtering characters?
-5. **Log analysis with jq.**
+5. **Interactive.** Run `interactive` against the vulnerable server. Try a legitimate call (`read_note` with `welcome.md`), then a traversal (`../secret.txt`), then a command injection (`search_notes` with `; cat ... #`). Observe the raw wire.
+6. **Compare.** Run `compare` and confirm the side-by-side verdict table. What does the table tell you about defense-in-depth?
+7. **Log analysis with jq.**
    ```bash
    jq -c 'select(.direction=="client->server") | .message.method' logs/*.jsonl
    jq -c 'select(.event=="verdict") | {server, attack, leaked}' logs/*.jsonl
