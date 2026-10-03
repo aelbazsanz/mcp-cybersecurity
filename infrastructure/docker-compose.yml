@@ -1,0 +1,32 @@
+name: mcp-infra
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mcp-ollama
+
+    ports:
+      - "${OLLAMA_HOST_PORT:-11434}:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+    networks:
+      - mcp-network
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  ollama_data:
+    name: mcp-ollama-data
+
+networks:
+  mcp-network:
+    name: mcp-network

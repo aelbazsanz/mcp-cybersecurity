@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+.python-version
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local data
+data/
+models/
+
+# Logs
+*.log
+logs/*
+!logs/.gitkeep
+
+# Audit reports / generated evidence
+labs/*-audit/reports/*
+!labs/*-audit/reports/.gitkeep
+
+labs/*-audit/evidence/*
+!labs/*-audit/evidence/.gitkeep

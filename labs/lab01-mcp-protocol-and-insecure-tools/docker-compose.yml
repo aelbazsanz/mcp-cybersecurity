@@ -1,0 +1,25 @@
+name: mcp-lab01
+
+services:
+  lab01:
+    build: .
+    image: mcp-lab01
+
+    environment:
+      - MCP_SERVER
+
+    volumes:
+      - ./logs:/app/logs
+
+    user: "1000:1000"
+
+    # Isolation: the vulnerable server executes shell commands, so the container
+    # has no network, no capabilities and a read-only filesystem.
+    network_mode: none
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
