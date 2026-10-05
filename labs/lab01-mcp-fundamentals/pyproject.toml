@@ -1,0 +1,9 @@
+[project]
+name = "mcp-lab01"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+# Note: For uv entry points, the project would need to be a proper package.
+# For this lab, run with: uv run python3 -m app  or  uv run python3 -m mcp_server
+# Or directly: python3 app.py  /  python3 mcp_server.py
