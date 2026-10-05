@@ -19,5 +19,5 @@ COPY data ./data
 
 USER lab
 
-ENTRYPOINT ["python", "src/client.py"]
-CMD ["--scenario", "handshake"]
+ENTRYPOINT ["python", "src/app.py"]
+CMD ["--scenario", "tools", "--server", "secure"]

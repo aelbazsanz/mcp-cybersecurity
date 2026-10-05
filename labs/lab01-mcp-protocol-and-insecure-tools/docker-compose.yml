@@ -7,14 +7,20 @@ services:
 
     environment:
       - MCP_SERVER
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3
 
     volumes:
       - ./logs:/app/logs
 
     user: "1000:1000"
+    networks:
+      - mcp-network
 
     # Isolation: the vulnerable server executes shell commands, so the container
     # has no network, no capabilities and a read-only filesystem.
+    # Note: chat scenario needs network access to reach Ollama — omit
+    # network_mode: none when using --scenario chat.
     network_mode: none
     read_only: true
     cap_drop:
