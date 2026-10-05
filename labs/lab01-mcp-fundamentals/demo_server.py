@@ -1,35 +1,35 @@
 #!/usr/bin/env python3
 """
-Simple MCP Server Demo
+MCP Server for lab01-mcp-fundamentals
 
 This script demonstrates an MCP Server that:
 1. Receives JSON-RPC 2.0 messages from stdin (from the MCP Client)
 2. Processes them according to the MCP protocol
-3. Simulates a data source (in-memory "database")
+3. Implements a read_security_message tool that reads from data/security.txt
 4. Sends JSON-RPC responses back to stdout (to the MCP Client)
 """
 
 import json
 import sys
 from typing import Dict, Any
-
-# Simulated in-memory "database"
-DATABASE = {
-    "users": [
-        {"id": 1, "name": "Alice", "role": "admin"},
-        {"id": 2, "name": "Bob", "role": "user"},
-        {"id": 3, "name": "Charlie", "role": "user"}
-    ],
-    "products": [
-        {"id": 101, "name": "Laptop", "price": 999.99},
-        {"id": 102, "name": "Mouse", "price": 25.50},
-        {"id": 103, "name": "Keyboard", "price": 75.00}
-    ]
-}
+import os
 
 def format_json(obj) -> str:
     """Format a JSON object on a single line for log readability."""
     return json.dumps(obj, sort_keys=True)
+
+def read_security_message() -> str:
+    """Read the security message from data/security.txt"""
+    try:
+        # Try to read from data/security.txt relative to this script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        security_path = os.path.join(script_dir, "data", "security.txt")
+        with open(security_path, 'r') as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        return "Error: security.txt not found"
+    except Exception as e:
+        return f"Error reading security message: {str(e)}"
 
 def main():
     """Main server loop - reads JSON-RPC from stdin, writes responses to stdout."""
@@ -58,7 +58,7 @@ def main():
                     "result": {
                         "protocolVersion": "2026-07-28",
                         "capabilities": {"tools": {}, "resources": {}, "prompts": {}},
-                        "serverInfo": {"name": "demo-mcp-server", "version": "1.0.0"}
+                        "serverInfo": {"name": "mcp-security-server", "version": "1.0.0"}
                     }
                 }
             elif method == "tools/list":
@@ -67,18 +67,12 @@ def main():
                     "id": request_id,
                     "result": {
                         "tools": [{
-                            "name": "query_database",
-                            "description": "Query the simulated database",
+                            "name": "read_security_message",
+                            "description": "Read the security message from data/security.txt",
                             "inputSchema": {
                                 "type": "object",
-                                "properties": {
-                                    "table": {
-                                        "type": "string",
-                                        "enum": ["users", "products"],
-                                        "description": "Database table to query"
-                                    }
-                                },
-                                "required": ["table"]
+                                "properties": {},
+                                "additionalProperties": False
                             }
                         }]
                     }
@@ -87,26 +81,16 @@ def main():
                 tool_name = params.get("name")
                 arguments = params.get("arguments", {})
 
-                if tool_name == "query_database":
-                    table = arguments.get("table")
-                    if table in DATABASE:
-                        result_text = json.dumps(DATABASE[table], indent=2)
-                        response = {
-                            "jsonrpc": "2.0",
-                            "id": request_id,
-                            "result": {
-                                "content": [{"type": "text", "text": result_text}]
-                            }
+                if tool_name == "read_security_message":
+                    # No arguments needed for this tool
+                    security_content = read_security_message()
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "result": {
+                            "content": [{"type": "text", "text": security_content}]
                         }
-                    else:
-                        response = {
-                            "jsonrpc": "2.0",
-                            "id": request_id,
-                            "error": {
-                                "code": -32602,
-                                "message": f"Invalid table: {table}"
-                            }
-                        }
+                    }
                 else:
                     response = {
                         "jsonrpc": "2.0",

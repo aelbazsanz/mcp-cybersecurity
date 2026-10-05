@@ -30,6 +30,7 @@ htmlcov/
 
 # Local data
 data/
+!data/security.txt
 models/
 
 # Logs

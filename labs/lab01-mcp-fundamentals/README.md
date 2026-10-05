@@ -1,123 +1,100 @@
-# Lab 01: MCP Fundamentals
+# lab01-mcp-fundamentals — MCP Fundamentals
 
-## Objective
+This lab demonstrates the basic Model Context Protocol (MCP) flow:
+- An **MCP Client** (interactive CLI) that starts an **MCP Server** via stdin/stdout
+- The client registers the server's tools via JSON-RPC 2.0
+- Tool communication is displayed in real time with `[MCP CLIENT -> MCP SERVER]` prefixes
+- The client has a built-in `echo` tool; after registration, the server's `read_security_message` tool is available
 
-Understand how the Model Context Protocol (MCP) works. MCP is a protocol that
-lets an application communicate with external data sources (like a database,
-file system, or API) through an **MCP Server**, using messages in **JSON-RPC**
-format.
-
-This lab does **not** require Ollama (or any LLM). It focuses on the protocol
-itself — the discovery, request, and response flow — so you can see the
-mechanism clearly without the LLM layer in the way.
-
-## How MCP Works (The Big Picture)
+## Structure
 
 ```
-[APP] ── JSON-RPC ──► [MCP CLIENT] ── JSON-RPC ──► [MCP SERVER] ── query ──► [DATA SOURCE]
-  ▲                                                                                │
-  └────────────────────────────────────────────────────────────────────────────────┘
+labs/lab01-mcp-fundamentals/
+├── demo_client.py        # Interactive MCP Client with /tools, /help, /register
+├── demo_server.py        # MCP Server with read_security_message tool
+├── data/
+│   └── security.txt      # Security message read by the server tool
+└── README.md             # This file
 ```
 
-1. **The app** (e.g., a chat interface) wants to talk to an external data source.
-2. **The MCP Client** is the part of the app that speaks JSON-RPC. It sends
-   requests to the MCP Server.
-3. **The MCP Server** is a bridge between the client and the actual data source.
-   It translates JSON-RPC requests into queries against the data source.
-4. **The data source** (database, file, API, etc.) returns raw data.
-5. **The MCP Server** wraps the data into a JSON-RPC response and sends it back
-   to the client.
-6. **The app** receives the data and can display it to the user.
-
-## Discovery / Registration
-
-When the app starts, it needs to know which MCP Servers are available. This is
-the **discovery** step:
-
-- The MCP Client asks the MCP Server what it can do (`initialize` / `ping`).
-- The server replies with its **capabilities** — what tools, resources, and
-  prompts it offers.
-- The app registers the server so it can call its tools later.
-
-In this lab's demo, you will see this discovery step happen automatically before
-any data is requested.
-
-## Message Format
-
-MCP uses **JSON-RPC 2.0**. Every message is a JSON object:
-
-**Request** (Client → Server):
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": { "name": "query_db", "arguments": { "query": "SELECT * FROM users" } }
-}
-```
-
-**Response** (Server → Client):
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": { "content": [{ "type": "text", "text": "[... data ...]" }] }
-}
-```
-
-**Notification** (one-way, no response expected):
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "notifications/initialized"
-}
-```
-
-## Running the Demo
-
-This lab contains two scripts that together show the full flow:
-
-- `demo_server.py` — runs the MCP Server (bridges JSON-RPC ↔ data source)
-- `demo_client.py` — runs the MCP Client inside the app (talks JSON-RPC)
-
-They communicate over **stdio** (standard input/output), which is the simplest
-MCP transport — no network, no ports, just pipes.
-
-### Step 1: Start the server (in one terminal)
+## Quick Start
 
 ```bash
-python demo_server.py
+cd labs/lab01-mcp-fundamentals
+
+# Run the interactive client
+python3 demo_client.py
 ```
 
-The server will start, listen on stdin/stdout, and wait for JSON-RPC messages.
+## Interactive Session Example
 
-### Step 2: Run the client (in another terminal)
+```
+=== lab01-mcp-fundamentals MCP Client ===
+  Commands: /help, /tools, /register
+  Or type a user prompt, e.g.: echo Hola
+  Press Ctrl+C to quit
 
-```bash
-python demo_client.py
+> /tools
+[APP] Registered tools:
+  - echo: Echo the user message at the screen. Useful to check that the client is working.
+
+> echo Hola
+[APP] User prompt: echo Hola
+[LLM] I will use the echo tool to echo your message at the screen.
+[APP] Tool [echo] executed. Result:
+    Echo: Hola
+
+> /register
+[APP] Registering MCP Server (stdio transport)...
+[APP] MCP Server started as subprocess (stdio).
+[APP] Step 1/3: send initialize request to MCP Server...
+[MCP CLIENT -> MCP SERVER] < to MCP SERVER > {"id":1,"jsonrpc":"2.0","method":"initialize","params":{"capabilities":{},"clientInfo":{"name":"lab01-mcp-client","version":"1.0.0"},"protocolVersion":"2026-07-28"}}
+[MCP CLIENT -> MCP SERVER] < from MCP SERVER > {"id":1,"jsonrpc":"2.0","result":{"capabilities":{"tools":{},"resources":{},"prompts":{}},"protocolVersion":"2026-07-28","serverInfo":{"name":"mcp-security-server","version":"1.0.0"}}}
+[APP] Step 2/3: send initialized notification...
+[MCP CLIENT -> MCP SERVER] < to MCP SERVER > {"jsonrpc":"2.0","method":"notifications/initialized"}
+[APP] Step 3/3: list tools of MCP Server...
+[MCP CLIENT -> MCP SERVER] < to MCP SERVER > {"id":2,"jsonrpc":"2.0","method":"tools/list"}
+[MCP CLIENT -> MCP SERVER] < from MCP SERVER > {"id":2,"jsonrpc":"2.0","result":{"tools":[{"description":"Read the security message from data/security.txt","inputSchema":{"additionalProperties":false,"properties":{},"type":"object"},"name":"read_security_message"}]}}
+[APP] Tool registered: read_security_message
+[APP] MCP Server registered. New tools: 1. Total tools now: 2
+
+> /tools
+[APP] Registered tools:
+  - echo: Echo the user message at the screen. Useful to check that the client is working.
+  - read_security_message: Read the security message from data/security.txt
+
+> read_security_message and print
+[APP] User prompt: read_security_message and print
+[LLM] I will use the read_security_message tool to read the security message file.
+[APP] Tool [read_security_message] executed. Result:
+    Good job, you are implementing a MCP Server
 ```
 
-The client will:
-1. **Discover** the server (send `initialize`, receive capabilities)
-2. **Call a tool** (send `tools/call` to query the database)
-3. **Receive** the data and display it
+## What You Learn
 
-Each line of output is tagged with its source so you can see exactly who is
-speaking: `[APP]`, `[MCP CLIENT]`, `[MCP SERVER]`, or `[DATA SOURCE]`.
+1. **MCP Client → Server Communication**: The client launches the server as a subprocess, speaks JSON-RPC 2.0 over stdin/stdout (stdio transport).
+2. **Protocol Handshake**: `initialize` → `notifications/initialized` → `tools/list`
+3. **Tool Registration**: The client discovers the server's tools and adds them to its local registry.
+4. **LLM Integration Pattern**: The client simulates the LLM step — the LLM sees available tools, decides which to invoke, then the tool runs and returns results.
+5. **Security Message**: The server reads a file from `data/security.txt` to prove file access via MCP tools.
 
-## What to Look For
+## Architecture
 
-- The **discovery handshake** at the start (client asks, server answers).
-- The **JSON-RPC envelope** on every message (`jsonrpc`, `id`, `method`,
-  `params` / `result`).
-- The **source tags** that show the direction of every message.
-- How the server translates a JSON-RPC request into a query against the data
-  source, and wraps the result back into JSON-RPC.
+```
+┌─────────────────────┐       stdio (JSON-RPC 2.0)       ┌─────────────────────┐
+│  MCP Client         │ ────────────────────────────────► │  MCP Server         │
+│  (demo_client.py)   │                                   │  (demo_server.py)   │
+│                     │                                   │                     │
+│  - Interactive CLI  │ ◄──────────────────────────────── │  - read_security_   │
+│  - Built-in echo    │                                   │    message tool     │
+│  - Tool registry    │                                   │  - Reads data/      │
+│  - Simulated LLM    │                                   │    security.txt     │
+└─────────────────────┘                                   └─────────────────────┘
+```
 
 ## Next Steps
 
-After you understand the protocol flow, later labs will add:
-- A real LLM (Ollama) that decides *when* to call an MCP tool.
-- Real MCP servers (filesystem, database, web search).
-- Security considerations (tool permission, input validation, prompt
-  injection).
+This lab establishes the MCP fundamentals. Later labs will explore:
+- **lab02**: MCP security vulnerabilities (prompt injection, tool poisoning)
+- **lab03**: MCP with external resources (filesystem, databases)
+- **lab04+**: Real LLM integration via Ollama (from `infrastructure/`)
