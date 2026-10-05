@@ -1,8 +1,0 @@
-[project]
-name = "lab01-mcp-protocol-and-insecure-tools"
-version = "0.1.0"
-description = "Lab01: MCP protocol anatomy and insecure tools (path traversal, command injection)"
-requires-python = ">=3.11"
-dependencies = [
-    "mcp>=1.30,<2",
-]
