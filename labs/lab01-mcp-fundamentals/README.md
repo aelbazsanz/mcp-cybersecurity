@@ -205,32 +205,6 @@ The `mcp_server` module lets you run the server standalone for debugging or for 
 5. **Communication Visualization**: All JSON-RPC messages are displayed with `[MCP Client -> MCP Server]` prefix
 6. **Security Message**: The server reads a file from `data/security.txt` to prove file access via MCP tools
 
-## Handshake During /register
-
-When you type /register:
-
-1. Server starts as a subprocess (mcp_server.py is launched)
-2. Handshake:
-   - initialize → server responds with protocolVersion, capabilities, serverInfo
-   - notifications/initialized → acknowledges the session
-3. tools/list → discovers read_security_message
-4. Tools are added to the local registry so the LLM can see them
-5. Server terminates (kept alive only for the handshake/discovery)
-
-Handshake During Tool Call (app.py → call_mcp_server_tool)
-
-When the LLM decides to call read_security_message (which requires the MCP server), the same handshake repeats:
-
-1. Start the server again
-2. initialize → notifications/initialized (same handshake)
-3. tools/call instead of tools/list
-
-This is necessary because with stdio transport, the server is only alive as long as the pipe is open. The handshake must precede any tools/call — this is a hard requirement of the MCP protocol. Real MCP clients (Claude Code's plugin host, the Python SDK, etc.) do
-
-Why Not Keep the Server Alive?
-
-The real reason the server terminates after /register is that this is a discoveist tools once, cache the tool definitions, then start the server fresh when youactually need to call a tool. A production client would typically keep a connection pool or persistent subprocess per server, but the handshake pattern (initialize → initialized → call) is identical.
-
 ## Next Steps
 
 This lab establishes the MCP fundamentals with real LLM integration. Later labs will explore:
