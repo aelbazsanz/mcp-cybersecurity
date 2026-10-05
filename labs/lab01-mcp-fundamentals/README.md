@@ -38,7 +38,7 @@ Each interactive session is logged to a JSON file in the `logs/` folder.
 
 Example log entry:
 ```json
-{"timestamp": "2026-10-05T20:58:19.131355+00:00", "session_id": "4cc49935-3074-4b9b-9aa0-af7b51f44b94", "model": "qwen3:8b", "user_prompt": "read_security_message", "response": "Tool [read_security_message] executed: Good job, you are using a tool of an MCP Server", "turn": 1}
+{"timestamp": "2026-10-05T20:58:19.131355+00:00", "session_id": "4cc49935-3074-4b9b-9aa0-af7b51f44b94", "model": "qwen3:8b", "user_prompt": "read_security_message", "response": "Tool [read_security_message] executed: Good job, you are implementing a MCP Server", "turn": 1}
 ```
 
 > **Note**: The `logs/` folder is in `.gitignore` — session logs are never committed to git.
@@ -100,20 +100,30 @@ The MCP Server is **started automatically** when you type `/register` in the app
 [APP] Goodbye!
 ```
 
-## How It Works
+## What Happens When You Run `/register`
 
-1. **Start**: Run `uv run app` (or `python3 app.py`) — shows the interactive menu
-2. **`/register`**: The app starts the MCP Server as a **real subprocess** and speaks JSON-RPC 2.0 to it:
-   - `initialize` → server responds with capabilities
-   - `notifications/initialized` → acknowledges session readiness
-   - `tools/list` → discovers server tools (e.g., `read_security_message`)
-3. **After registration**: `/tools` lists both the built-in `echo` and MCP server tools
-4. **User prompts**: e.g., `echo Hola`, `read_security_message`
-   - The prompt is sent to the LLM (Ollama `qwen3:8b`) along with available tools
-   - The LLM decides which tool to invoke (or returns text)
-   - If tool calls: the MCP Server is started again, the tool is called via JSON-RPC 2.0, result is shown
-   - If text: the LLM's response is shown
-5. **Communication logs**: All JSON-RPC messages are prefixed with `[MCP Client -> MCP Server]` and also saved to `.mcp_client_logs.txt`
+When you type `/register` in the interactive client, the following three-step MCP handshake occurs over stdio transport:
+
+1. **`initialize`** — The client sends an `initialize` JSON-RPC 2.0 request. The server responds with its `protocolVersion`, `serverInfo`, and declared `capabilities`. This establishes the protocol version and tells the client what the server supports.
+
+2. **`notifications/initialized`** — The client sends a `notifications/initialized` notification (no response ID, no response expected). This acknowledges that the handshake is complete and the session is ready for tool operations.
+
+3. **`tools/list`** — The client sends a `tools/list` request. The server responds with its available tools (e.g., `read_security_message`). The client registers these tools in its local tool registry, making them available for invocation.
+
+### Why the handshake repeats for tool calls
+
+The stdio transport requires the MCP Server subprocess to terminate after each registration. When a registered tool is invoked (e.g., `read_security_message`), the client must relaunch the server and repeat steps 1–3 (`initialize` → `notifications/initialized` → `tools/call`) because:
+
+- The subprocess only lives while the stdio pipe is open
+- Each tool call needs a fresh server instance with a new stdio connection
+- This is why `/register` starts the server, and why invoking an MCP server tool also triggers a full handshake with a re-launched server
+
+### Discovery vs. Call
+
+- **Discovery** (`/register`): Runs the full `initialize` → `initialized` → `tools/list` sequence to find out what tools the server offers.
+- **Tool Call**: After registration, invoking a tool (e.g., via LLM decision or `echo Hola`) relaunches the server and runs `initialize` → `initialized` → `tools/call` with the specific tool name and arguments.
+
+After `/register`, the `/tools` command lists both the built-in `echo` tool and any MCP server tools that were discovered (e.g., `read_security_message`).
 
 ## Architecture
 
@@ -194,7 +204,6 @@ The `mcp_server` module lets you run the server standalone for debugging or for 
 4. **Real Tool Execution**: Tools are executed via JSON-RPC 2.0 over stdio — either built-in `echo` or MCP server tools like `read_security_message`
 5. **Communication Visualization**: All JSON-RPC messages are displayed with `[MCP Client -> MCP Server]` prefix
 6. **Security Message**: The server reads a file from `data/security.txt` to prove file access via MCP tools
-```
 
 ## Next Steps
 
