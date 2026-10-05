@@ -45,3 +45,4 @@ labs/*-audit/reports/*
 
 labs/*-audit/evidence/*
 !labs/*-audit/evidence/.gitkeep
+*.egg-info
