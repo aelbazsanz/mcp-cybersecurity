@@ -37,6 +37,7 @@ models/
 *.log
 logs/*
 !logs/.gitkeep
+.mcp_client_logs.txt
 
 # Audit reports / generated evidence
 labs/*-audit/reports/*
