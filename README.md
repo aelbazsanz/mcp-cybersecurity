@@ -1,62 +1,78 @@
-# Shared infrastructure
+# MCP Cybersecurity Labs
 
-This directory starts the model server (Ollama) used by the labs that need an LLM.
-It is **independent** from any other lab repository: every name carries the `mcp-`
-prefix so nothing gets mixed up.
+A collection of hands-on labs for learning MCP (Model Context Protocol) security concepts, tool integration, and defensive security practices.
 
-> Labs 01-03 do not need Ollama. Start it from lab04 onwards.
+## Project Structure
 
-## Names
+```
+mcp-cybersecurity/
+├── README.md                     # This file
+├── .gitignore                    # Git ignore rules for logs, caches, etc.
+├── .claude/                      # Claude Code settings
+│   └── settings.json
+├── infrastructure/               # Shared Ollama infrastructure (for labs 04+)
+│   ├── docker-compose.yml       # Ollama container definition
+│   └── INFRASTRUCTURE.md        # How to start Ollama and connect from labs
+├── labs/
+│   ├── lab01-mcp-fundamentals/   # Lab 01: MCP protocol basics with real LLM
+│   │   ├── app.py               # Interactive MCP Client with real LLM (Ollama)
+│   │   ├── mcp_server.py        # MCP Server with read_security_message tool
+│   │   ├── data/
+│   │   │   └── security.txt     # Security message read by server tool
+│   │   ├── logs/                # Session logs (auto-generated, not tracked)
+│   │   ├── pyproject.toml       # uv project config
+│   │   └── README.md            # Lab-specific documentation
+│   └── ... (future labs)
+│       ├── lab02-mcp-security-vulnerabilities/
+│       ├── lab03-mcp-resources/
+│       └── lab04-ollama-integration/
+```
 
-| Resource | Name |
-|---|---|
-| Compose project | `mcp-infra` |
-| Container | `mcp-ollama` |
-| Network | `mcp-network` |
-| Models volume | `mcp-ollama-data` |
-| Host port | `11435` (configurable with `OLLAMA_HOST_PORT`) |
+## Quick Start: Lab 01 - MCP Fundamentals
 
-The Compose project name is pinned with `name:` because, by default, Compose uses the
-directory name (`infrastructure`), and two repositories with that same directory would
-end up sharing a project.
+```bash
+cd labs/lab01-mcp-fundamentals
 
-## Usage
+# Run the interactive MCP Client
+uv run python3 -m app
+
+# Alternative: run directly with python3
+python3 app.py
+```
+
+**Lab 01 demonstrates**:
+- MCP protocol handshake (`initialize` / `notifications/initialized` / `tools/list`)
+- Tool registration via stdio transport (JSON-RPC 2.0)
+- Real LLM integration with Ollama (qwen3:8b)
+- LLM-decided tool invocation based on user prompts
+- Communication visualization with `[MCP Client -> MCP Server]` logs
+- Session logging to JSON files
+
+**Start with**: `cd labs/lab01-mcp-fundamentals/README.md`
+
+## Setting Up Ollama (for Labs 04+)
+
+Labs 01-03 run without Ollama. Starting from Lab 04, you'll need the Ollama infrastructure:
 
 ```bash
 cd infrastructure
-cp .env.example .env            # optional: only needed to change the port
 docker compose up -d
 docker compose ps               # wait for "healthy"
-```
-
-Pull a model (the volume is dedicated, it does not share models with other stacks):
-
-```bash
-docker exec -it mcp-ollama ollama pull <model>
+docker exec -it mcp-ollama ollama pull qwen3:8b
 docker exec -it mcp-ollama ollama list
 ```
 
-For tool calling, pick a model that supports it; models that predate that feature will not execute tools.
+Labs join the `mcp-network` as external networks to reach Ollama at `http://ollama:11434`.
 
-## How labs connect
+## Development
 
-A lab that needs Ollama joins the network as an external network and reaches the server by service name:
+- Run `uv run python3 -m app` in a lab directory
+- Session logs are saved to `logs/{session_id}.json`
+- Logs are git-ignored (not committed)
 
-```yaml
-services:
-  agent:
-    networks: [mcp-network]
-    environment:
-      - OLLAMA_URL            # e.g. http://ollama:11434
-networks:
-  mcp-network:
-    name: mcp-network
-    external: true
-```
+## Learning Path
 
-## Stop and clean up
-
-```bash
-docker compose down        # keeps the models
-docker compose down -v     # also deletes the mcp-ollama-data volume
-```
+1. **Lab 01**: MCP protocol fundamentals, tool discovery, real LLM integration
+2. **Lab 02**: MCP security vulnerabilities (prompt injection, tool poisoning)
+3. **Lab 03**: MCP with external resources (filesystem, databases)
+4. **Lab 04+**: Advanced LLM tool-calling patterns and validation

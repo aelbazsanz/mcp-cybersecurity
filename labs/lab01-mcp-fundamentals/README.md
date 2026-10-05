@@ -17,9 +17,31 @@ labs/lab01-mcp-fundamentals/
 ├── mcp_server.py              # MCP Server (renamed from demo_server.py)
 ├── data/
 │   └── security.txt           # Security message read by the server tool
+├── logs/                      # Session logs (auto-generated, not in git)
+│   └── {session_id}.json      # One JSON file per session
 ├── pyproject.toml             # uv project config
 └── README.md                  # This file
 ```
+
+## Session Logging
+
+Each interactive session is logged to a JSON file in the `logs/` folder.
+- **Filename**: `{session_id}.json` (UUID generated per session)
+- **Format**: JSON Lines (one JSON object per line)
+- **Fields per entry**:
+  - `timestamp`: ISO 8601 UTC timestamp
+  - `session_id`: Unique session identifier
+  - `model`: LLM model used (e.g., `qwen3:8b`)
+  - `user_prompt`: The user's input prompt
+  - `response`: LLM's response (tool execution result or text)
+  - `turn`: Turn number within the session
+
+Example log entry:
+```json
+{"timestamp": "2026-10-05T20:58:19.131355+00:00", "session_id": "4cc49935-3074-4b9b-9aa0-af7b51f44b94", "model": "qwen3:8b", "user_prompt": "read_security_message", "response": "Tool [read_security_message] executed: Good job, you are using a tool of an MCP Server", "turn": 1}
+```
+
+> **Note**: The `logs/` folder is in `.gitignore` — session logs are never committed to git.
 
 ## Quick Start
 

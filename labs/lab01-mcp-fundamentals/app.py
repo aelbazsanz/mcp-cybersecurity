@@ -15,6 +15,10 @@ The LLM (Ollama qwen3:8b) receives user prompts and available tools,
 and decides whether to invoke a tool. The client shows tool execution
 results and [MCP Client -> MCP Server] communication logs.
 
+Session logs are saved to the logs/ folder as JSON files.
+Each file is named {session_id}.json and contains:
+  timestamp, session_id, model, user_prompt, response, turn
+
 Usage:
     uv run app
     # or set OLLAMA_URL and OLLAMA_MODEL env vars
@@ -27,6 +31,8 @@ import sys
 import time
 import urllib.request
 import urllib.error
+import uuid
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Callable
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,6 +40,13 @@ SERVER_SCRIPT = os.path.join(APP_DIR, "mcp_server.py")
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:8b")
+
+# Log directory for session logs
+LOG_DIR = os.path.join(APP_DIR, "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Session tracking
+session_id: str = str(uuid.uuid4())
 
 # Tool registry: name -> {description, inputSchema}
 TOOLS: Dict[str, Dict[str, Any]] = {
@@ -334,7 +347,7 @@ def ollama_chat(messages: List[Dict[str, Any]], tools: List[Dict[str, Any]]) -> 
         return json.loads(resp.read().decode())
 
 
-def process_prompt(prompt: str) -> None:
+def process_prompt(prompt: str, turn: int = 0) -> None:
     """Send user prompt to LLM, handle tool calls."""
     messages = [{"role": "user", "content": prompt}]
     ollama_tools = tools_to_ollama_format()
@@ -359,19 +372,47 @@ def process_prompt(prompt: str) -> None:
                     result = run_tool(tool_name, arguments)
                     log_app(f"Tool [{tool_name}] executed. Result:")
                     print(f"    {result}")
+                    response_str = f"Tool [{tool_name}] executed: {result}"
+                    log_interaction(turn, prompt, response_str)
                 except ValueError as e:
                     print(f"[ERROR] {e}")
+                    log_interaction(turn, prompt, f"Error: {e}")
         elif content:
             log_llm("LLM response (no tool calls):")
             print(f"\033[1;33m{content}\033[0m")
+            log_interaction(turn, prompt, content)
         else:
             log_llm("LLM returned empty response.")
+            log_interaction(turn, prompt, "")
 
     except urllib.error.URLError as e:
         print(f"[ERROR] Failed to connect to Ollama at {OLLAMA_URL}: {e}")
         print("[APP] Make sure Ollama is running and accessible.")
     except Exception as e:
         print(f"[ERROR] Unexpected error: {e}")
+
+    except urllib.error.URLError as e:
+        print(f"[ERROR] Failed to connect to Ollama at {OLLAMA_URL}: {e}")
+        print("[APP] Make sure Ollama is running and accessible.")
+    except Exception as e:
+        print(f"[ERROR] Unexpected error: {e}")
+
+
+def log_interaction(turn: int, user_prompt: str, response: str) -> None:
+    """Save interaction to a JSON log file named session_id.json."""
+    log_entry: Dict[str, Any] = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "session_id": session_id,
+        "model": OLLAMA_MODEL,
+        "user_prompt": user_prompt,
+        "response": response,
+        "turn": turn,
+    }
+
+    # Write to a file named session_id.json in the logs folder
+    log_path = os.path.join(LOG_DIR, f"{session_id}.json")
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(log_entry) + "\n")
 
 
 def run_interactive_loop() -> None:
@@ -381,6 +422,8 @@ def run_interactive_loop() -> None:
     print("  Or type a user prompt, e.g.: echo Hola")
     print("  Press Ctrl+C to quit")
     print()
+
+    turn = 0
 
     while True:
         try:
@@ -403,7 +446,8 @@ def run_interactive_loop() -> None:
                 log_app("Goodbye!")
                 break
         else:
-            process_prompt(prompt)
+            turn += 1
+            process_prompt(prompt, turn)
         print()
 
 
