@@ -17,7 +17,7 @@ labs/lab01-mcp-fundamentals/
 ├── mcp_server.py              # MCP Server (renamed from demo_server.py)
 ├── data/
 │   └── security.txt           # Security message read by the server tool
-├── pyproject.toml             # uv project config (scripts: app, mcp_server)
+├── pyproject.toml             # uv project config
 └── README.md                  # This file
 ```
 
@@ -26,12 +26,14 @@ labs/lab01-mcp-fundamentals/
 ```bash
 cd labs/lab01-mcp-fundamentals
 
-# Run with uv (recommended)
-uv run app
+# Main command — runs the interactive MCP Client
+uv run python3 -m app
 
 # Or run directly with python3
 python3 app.py
 ```
+
+The MCP Server is **started automatically** when you type `/register` in the app. It is **real** (not simulated) — the app launches `mcp_server.py` as a subprocess, speaks JSON-RPC 2.0 over stdin/stdout, and the communication is shown with `[MCP Client -> MCP Server]` logs.
 
 ## Interactive Session Example
 
@@ -79,7 +81,7 @@ python3 app.py
 ## How It Works
 
 1. **Start**: Run `uv run app` (or `python3 app.py`) — shows the interactive menu
-2. **`/register`**: Launches the MCP Server via stdio, performs the handshake:
+2. **`/register`**: The app starts the MCP Server as a **real subprocess** and speaks JSON-RPC 2.0 to it:
    - `initialize` → server responds with capabilities
    - `notifications/initialized` → acknowledges session readiness
    - `tools/list` → discovers server tools (e.g., `read_security_message`)
@@ -87,7 +89,7 @@ python3 app.py
 4. **User prompts**: e.g., `echo Hola`, `read_security_message`
    - The prompt is sent to the LLM (Ollama `qwen3:8b`) along with available tools
    - The LLM decides which tool to invoke (or returns text)
-   - If tool calls: the MCP Server is started, the tool is called via JSON-RPC 2.0, result is shown
+   - If tool calls: the MCP Server is started again, the tool is called via JSON-RPC 2.0, result is shown
    - If text: the LLM's response is shown
 5. **Communication logs**: All JSON-RPC messages are prefixed with `[MCP Client -> MCP Server]` and also saved to `.mcp_client_logs.txt`
 
@@ -95,14 +97,14 @@ python3 app.py
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  uv run app (app.py) — Interactive MCP Client              │
+│  uv run python3 -m app (app.py) — Interactive MCP Client   │
 │  - Reads user input from stdin                             │
 │  - Sends prompts to Ollama LLM with available tools        │
 │  - Parses LLM response: tool_calls or text                │
+│  - Starts MCP Server automatically on /register            │
 │  - Executes tools (echo built-in or MCP server via stdio) │
 │  - Shows [MCP Client -> MCP Server] communication logs    │
 └─────────────────────┬─────────────────────────────────────┘
-                      │
                       │ stdio (JSON-RPC 2.0)
                       ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -110,9 +112,7 @@ python3 app.py
 │  - JSON-RPC 2.0 message handler                           │
 │  - read_security_message tool: reads data/security.txt     │
 │  - initialize / tools/list / tools/call methods           │
-└─────────────────────┬─────────────────────────────────────┘
-                      │
-                      │ data/security.txt contains: "Good job, you are implementing a MCP Server"
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Real LLM Integration
@@ -150,9 +150,19 @@ The client parses these and executes the corresponding tool.
 
 ```bash
 cd labs/lab01-mcp-fundamentals
-uv run app          # Run the MCP Client
-uv run mcp_server   # Run the MCP Server directly
+
+# Main command — runs the interactive MCP Client
+uv run python3 -m app
+
+# Alternative: run directly with python3
+python3 app.py
+
+# NOT NEEDED for normal use — the app starts the server automatically when you type /register
+# uv run python3 -m mcp_server   # Runs the MCP Server directly (waits for JSON-RPC on stdin)
 ```
+
+### Why `uv run python3 -m mcp_server` exists
+The `mcp_server` module lets you run the server standalone for debugging or for connecting from a different client. It reads JSON-RPC from stdin and writes responses to stdout. You typically **don't need to run it manually** — the `/register` command in the app starts it as a subprocess and handles the communication.
 
 ## What You Learn
 
