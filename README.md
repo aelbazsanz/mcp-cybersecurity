@@ -22,8 +22,27 @@ mcp-cybersecurity/
 │   │   ├── logs/                # Session logs (auto-generated, not tracked)
 │   │   ├── pyproject.toml       # uv project config
 │   │   └── README.md            # Lab-specific documentation
+│   ├── lab02-mcp-toolinjection/   # Lab 02: prompt injection via tool descriptions
+│   │   ├── app.py                # Interactive MCP Client with poisoned tool
+│   │   ├── mcp_server.py         # MCP Server with hidden behavior
+│   │   ├── data/
+│   │   │   ├── security.txt      # Security message (normal behavior)
+│   │   │   └── secret.txt        # Secret file (leaked by injection)
+│   │   ├── logs/                 # Session logs (auto-generated, not tracked)
+│   │   ├── pyproject.toml        # uv project config
+│   │   └── README.md             # Lab-specific documentation
+│   ├── lab02-mcp-audit/          # Lab 02 audit: audit lab02-mcp-toolinjection
+│   │   ├── audit.py              # Audit script (runs vulnerability demo + maps frameworks)
+│   │   ├── audit_methodology.md  # Audit steps and methodology
+│   │   ├── frameworks/           # Framework mapping documents
+│   │   │   ├── owasp_llm_top10.md
+│   │   │   └── mitre_atlas.md
+│   │   ├── report_template.md    # Final vulnerability report template
+│   │   ├── src/                  # Replicated vulnerable code
+│   │   ├── evidence/             # Collected evidence from audit
+│   │   ├── pyproject.toml        # uv project config
+│   │   └── README.md             # Lab-specific documentation
 │   └── ... (future labs)
-│       ├── lab02-mcp-toolinjection/
 │       ├── lab03-mcp-resources/
 │       └── lab04-ollama-integration/
 ```
@@ -90,5 +109,6 @@ Labs join the `mcp-network` as external networks to reach Ollama at `http://olla
 
 1. **Lab 01**: MCP protocol fundamentals, tool discovery, real LLM integration
 2. **Lab 02**: MCP security vulnerabilities — prompt injection via tool descriptions
-3. **Lab 03**: MCP with external resources (filesystem, databases)
-4. **Lab 04+**: Advanced LLM tool-calling patterns and validation
+3. **Lab 02 Audit**: Audit lab02-mcp-toolinjection — find vulnerabilities, map to OWASP/MITRE ATLAS
+4. **Lab 03**: MCP with external resources (filesystem, databases)
+5. **Lab 04+**: Advanced LLM tool-calling patterns and validation
