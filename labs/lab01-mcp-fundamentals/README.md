@@ -204,7 +204,7 @@ The `mcp_server` module lets you run the server standalone for debugging or for 
 4. **Real Tool Execution**: Tools are executed via JSON-RPC 2.0 over stdio — either built-in `echo` or MCP server tools like `read_security_message`
 5. **Communication Visualization**: All JSON-RPC messages are displayed with `[MCP Client -> MCP Server]` prefix
 6. **Security Message**: The server reads a file from `data/security.txt` to prove file access via MCP tools
-
+exit
 ## Next Steps
 
 This lab establishes the MCP fundamentals with real LLM integration. Later labs will explore:
