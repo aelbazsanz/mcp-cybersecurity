@@ -23,7 +23,7 @@ mcp-cybersecurity/
 │   │   ├── pyproject.toml       # uv project config
 │   │   └── README.md            # Lab-specific documentation
 │   └── ... (future labs)
-│       ├── lab02-mcp-security-vulnerabilities/
+│       ├── lab02-mcp-toolinjection/
 │       ├── lab03-mcp-resources/
 │       └── lab04-ollama-integration/
 ```
@@ -50,6 +50,22 @@ python3 app.py
 
 **Start with**: `cd labs/lab01-mcp-fundamentals/README.md`
 
+## Quick Start: Lab 02 - Tool Description Injection
+
+```bash
+cd labs/lab02-mcp-toolinjection
+
+# Run the interactive MCP Client (same as lab01)
+uv run python3 -m app
+```
+
+**Lab 02 demonstrates**:
+- Prompt injection via malicious tool descriptions
+- How LLMs read and follow hidden instructions in tool metadata
+- MCP tool attack surface and trust boundaries
+
+**Start with**: `cd labs/lab02-mcp-toolinjection/README.md`
+
 ## Setting Up Ollama (for Labs 04+)
 
 Labs 01-03 run without Ollama. Starting from Lab 04, you'll need the Ollama infrastructure:
@@ -73,6 +89,6 @@ Labs join the `mcp-network` as external networks to reach Ollama at `http://olla
 ## Learning Path
 
 1. **Lab 01**: MCP protocol fundamentals, tool discovery, real LLM integration
-2. **Lab 02**: MCP security vulnerabilities (prompt injection, tool poisoning)
+2. **Lab 02**: MCP security vulnerabilities — prompt injection via tool descriptions
 3. **Lab 03**: MCP with external resources (filesystem, databases)
 4. **Lab 04+**: Advanced LLM tool-calling patterns and validation
