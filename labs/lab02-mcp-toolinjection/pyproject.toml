@@ -5,15 +5,15 @@ requires-python = ">=3.11"
 dependencies = []
 
 # To run the MCP Client:
-#   uv run python3 -m app
-#   OR: python3 app.py
+#   PYTHONPATH=src uv run python3 -m app
+#   OR: python3 src/app.py
 #
 # To run the MCP Server directly (for debugging):
-#   uv run python3 -m mcp_server
-#   OR: python3 mcp_server.py
+#   PYTHONPATH=src uv run python3 -m mcp_server
+#   OR: python3 src/mcp_server.py
 #
 # Note: The MCP Server is automatically started by the Client when you type /register
 #       so you typically don't need to run it separately.
 #
 # Set SERVER_MODE=defensive for defensive mode (default: vulnerable)
-#   SERVER_MODE=defensive uv run python3 -m app
+#   SERVER_MODE=defensive PYTHONPATH=src uv run python3 -m app

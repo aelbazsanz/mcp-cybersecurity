@@ -25,14 +25,16 @@ mcp-cybersecurity/
 │   │   ├── pyproject.toml       # uv project config
 │   │   └── README.md            # Lab-specific documentation
 │   ├── lab02-mcp-toolinjection/   # Lab 02: prompt injection via tool descriptions
-│   │   ├── app.py                # Interactive MCP Client with poisoned tool
-│   │   ├── mcp_server.py         # MCP Server with hidden behavior
+│   │   ├── src/
+│   │   │   ├── app.py             # Interactive MCP Client (evolved from lab01)
+│   │   │   ├── mcp_server.py      # MCP Server with SERVER_MODE support
+│   │   │   └── __init__.py        # Makes src a package
 │   │   ├── data/
-│   │   │   ├── security.txt      # Security message (normal behavior)
-│   │   │   └── secret.txt        # Secret file (leaked by injection)
-│   │   ├── logs/                 # Session logs (auto-generated, not tracked)
-│   │   ├── pyproject.toml        # uv project config
-│   │   └── README.md             # Lab-specific documentation
+│   │   │   ├── security.txt       # Legitimate security message
+│   │   │   └── secret.txt         # "Sensitive" file for exfiltration demo
+│   │   ├── logs/                   # Session logs (auto-generated, not in git)
+│   │   ├── pyproject.toml         # uv project config
+│   │   └── README.md              # Lab-specific documentation
 │   ├── lab02-mcp-audit/          # Lab 02 audit: audit lab02-mcp-toolinjection
 │   │   ├── audit.py              # Audit script (runs vulnerability demo + maps frameworks)
 │   │   ├── audit_methodology.md  # Audit steps and methodology
