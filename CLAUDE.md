@@ -11,11 +11,11 @@ This repo is a collection of hands-on labs for learning MCP (Model Context Proto
 ```bash
 # Lab 01 - MCP fundamentals
 cd labs/lab01-mcp-fundamentals
-uv run python3 -m app       # interactive MCP client
-python3 app.py              # equivalent without uv
+PYTHONPATH=src uv run python3 -m app       # interactive MCP client
+python3 src/app.py              # equivalent without uv
 
-uv run python3 -m mcp_server  # run the MCP server standalone (for debugging)
-python3 mcp_server.py       # direct execution
+PYTHONPATH=src uv run python3 -m mcp_server  # run the MCP server standalone (for debugging)
+python3 src/mcp_server.py       # direct execution
 
 # Ollama (labs 04+)
 cd infrastructure

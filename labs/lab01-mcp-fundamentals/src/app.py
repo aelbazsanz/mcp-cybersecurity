@@ -20,7 +20,9 @@ Each file is named {session_id}.json and contains:
   timestamp, session_id, model, user_prompt, response, turn
 
 Usage:
-    uv run app
+    PYTHONPATH=src uv run python3 -m app
+    # or run directly with python3
+    python3 src/app.py
     # or set OLLAMA_URL and OLLAMA_MODEL env vars
 """
 
@@ -35,15 +37,19 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Callable
 
-APP_DIR = os.path.dirname(os.path.abspath(__file__))
-SERVER_SCRIPT = os.path.join(APP_DIR, "mcp_server.py")
+SRC_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SRC_DIR)
+SERVER_SCRIPT = os.path.join(SRC_DIR, "mcp_server.py")
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:8b")
 
-# Log directory for session logs
-LOG_DIR = os.path.join(APP_DIR, "logs")
+# Log directory for session logs (kept at project root)
+LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
+
+# MCP client log file at project root
+MCP_LOGS_FILE = os.path.join(PROJECT_ROOT, ".mcp_client_logs.txt")
 
 # Session tracking
 session_id: str = str(uuid.uuid4())
@@ -68,9 +74,6 @@ TOOLS: Dict[str, Dict[str, Any]] = {
 
 # Built-in commands of the app
 BUILTIN_COMMANDS = {"/help", "/tools", "/register", "/exit"}
-
-# Where MCP server logs are written (captured stderr)
-MCP_LOGS_FILE = os.path.join(APP_DIR, ".mcp_client_logs.txt")
 
 
 def format_json(obj) -> str:

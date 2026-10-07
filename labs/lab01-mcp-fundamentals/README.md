@@ -13,14 +13,16 @@ This lab demonstrates the basic Model Context Protocol (MCP) flow with real LLM 
 
 ```
 labs/lab01-mcp-fundamentals/
-├── app.py                     # Interactive MCP Client (renamed from demo_client.py)
-├── mcp_server.py              # MCP Server (renamed from demo_server.py)
+├── src/
+│   ├── app.py                     # Interactive MCP Client (renamed from demo_client.py)
+│   ├── mcp_server.py              # MCP Server (renamed from demo_server.py)
+│   └── __init__.py                # Makes src a package (empty)
 ├── data/
-│   └── security.txt           # Security message read by the server tool
-├── logs/                      # Session logs (auto-generated, not in git)
-│   └── {session_id}.json      # One JSON file per session
-├── pyproject.toml             # uv project config
-└── README.md                  # This file
+│   └── security.txt               # Security message read by the server tool
+├── logs/                          # Session logs (auto-generated, not in git)
+│   └── {session_id}.json        # One JSON file per session
+├── pyproject.toml                 # uv project config
+└── README.md                      # This file
 ```
 
 ## Session Logging
@@ -49,13 +51,13 @@ Example log entry:
 cd labs/lab01-mcp-fundamentals
 
 # Main command — runs the interactive MCP Client
-uv run python3 -m app
+PYTHONPATH=src uv run python3 -m app
 
 # Or run directly with python3
-python3 app.py
+python3 src/app.py
 ```
 
-The MCP Server is **started automatically** when you type `/register` in the app. It is **real** (not simulated) — the app launches `mcp_server.py` as a subprocess, speaks JSON-RPC 2.0 over stdin/stdout, and the communication is shown with `[MCP Client -> MCP Server]` logs.
+The MCP Server is **started automatically** when you type `/register` in the app. It is **real** (not simulated) — the app launches `src/mcp_server.py` as a subprocess, speaks JSON-RPC 2.0 over stdin/stdout, and the communication is shown with `[MCP Client -> MCP Server]` logs.
 
 ## Interactive Session Example
 
@@ -129,7 +131,8 @@ After `/register`, the `/tools` command lists both the built-in `echo` tool and 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  uv run python3 -m app (app.py) — Interactive MCP Client   │
+│  PYTHONPATH=src uv run python3 -m app (src/app.py)          │
+│  Interactive MCP Client                                      │
 │  - Reads user input from stdin                             │
 │  - Sends prompts to Ollama LLM with available tools        │
 │  - Parses LLM response: tool_calls or text                │
@@ -140,7 +143,7 @@ After `/register`, the `/tools` command lists both the built-in `echo` tool and 
                       │ stdio (JSON-RPC 2.0)
                       ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  MCP Server (mcp_server.py) — stdio transport             │
+│  MCP Server (src/mcp_server.py) — stdio transport           │
 │  - JSON-RPC 2.0 message handler                           │
 │  - read_security_message tool: reads data/security.txt     │
 │  - initialize / tools/list / tools/call methods           │
@@ -184,16 +187,16 @@ The client parses these and executes the corresponding tool.
 cd labs/lab01-mcp-fundamentals
 
 # Main command — runs the interactive MCP Client
-uv run python3 -m app
+PYTHONPATH=src uv run python3 -m app
 
 # Alternative: run directly with python3
-python3 app.py
+python3 src/app.py
 
 # NOT NEEDED for normal use — the app starts the server automatically when you type /register
-# uv run python3 -m mcp_server   # Runs the MCP Server directly (waits for JSON-RPC on stdin)
+# PYTHONPATH=src uv run python3 -m mcp_server   # Runs the MCP Server directly (waits for JSON-RPC on stdin)
 ```
 
-### Why `uv run python3 -m mcp_server` exists
+### Why `PYTHONPATH=src uv run python3 -m mcp_server` exists
 The `mcp_server` module lets you run the server standalone for debugging or for connecting from a different client. It reads JSON-RPC from stdin and writes responses to stdout. You typically **don't need to run it manually** — the `/register` command in the app starts it as a subprocess and handles the communication.
 
 ## What You Learn

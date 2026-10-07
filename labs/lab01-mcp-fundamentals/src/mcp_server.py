@@ -9,9 +9,9 @@ This script demonstrates an MCP Server that:
 4. Sends JSON-RPC responses back to stdout (to the MCP Client)
 
 Usage:
-    uv run mcp_server
+    PYTHONPATH=src uv run python3 -m mcp_server
     # or
-    python3 mcp_server.py
+    python3 src/mcp_server.py
 """
 
 import json
@@ -28,9 +28,10 @@ def format_json(obj) -> str:
 def read_security_message() -> str:
     """Read the security message from data/security.txt"""
     try:
-        # Try to read from data/security.txt relative to this script
+        # data/ lives at the project root, one level above this script's directory
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        security_path = os.path.join(script_dir, "data", "security.txt")
+        project_root = os.path.dirname(script_dir)
+        security_path = os.path.join(project_root, "data", "security.txt")
         with open(security_path, 'r') as f:
             return f.read().strip()
     except FileNotFoundError:

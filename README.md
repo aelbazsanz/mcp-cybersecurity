@@ -15,10 +15,12 @@ mcp-cybersecurity/
 │   └── INFRASTRUCTURE.md        # How to start Ollama and connect from labs
 ├── labs/
 │   ├── lab01-mcp-fundamentals/   # Lab 01: MCP protocol basics with real LLM
-│   │   ├── app.py               # Interactive MCP Client with real LLM (Ollama)
-│   │   ├── mcp_server.py        # MCP Server with read_security_message tool
+│   │   ├── src/
+│   │   │   ├── app.py            # Interactive MCP Client with real LLM (Ollama)
+│   │   │   ├── mcp_server.py     # MCP Server with read_security_message tool
+│   │   │   └── __init__.py       # Makes src a package (empty)
 │   │   ├── data/
-│   │   │   └── security.txt     # Security message read by server tool
+│   │   │   └── security.txt      # Security message read by server tool
 │   │   ├── logs/                # Session logs (auto-generated, not tracked)
 │   │   ├── pyproject.toml       # uv project config
 │   │   └── README.md            # Lab-specific documentation
@@ -53,10 +55,10 @@ mcp-cybersecurity/
 cd labs/lab01-mcp-fundamentals
 
 # Run the interactive MCP Client
-uv run python3 -m app
+PYTHONPATH=src uv run python3 -m app
 
 # Alternative: run directly with python3
-python3 app.py
+python3 src/app.py
 ```
 
 **Lab 01 demonstrates**:
