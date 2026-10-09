@@ -150,12 +150,19 @@ def show_help() -> None:
 def send_message(
     process: subprocess.Popen,
     message: Dict[str, Any],
-    turn: Any = "register"
+    turn: Any = "register",
+    log_communication: bool = True
 ) -> Optional[Dict[str, Any]]:
-    """Send a JSON-RPC message through the pipe and return the response."""
+    """Send a JSON-RPC message through the pipe and return the response.
+
+    log_communication: when False, silence the [MCP CLIENT -> MCP SERVER]
+    terminal output during this exchange. The message is still recorded via
+    the audit trail and in the captured server stderr log.
+    """
     process.stdin.write(json.dumps(message) + "\n")
     process.stdin.flush()
-    log_mcp(f"< to MCP SERVER > {format_json(message)}")
+    if log_communication:
+        log_mcp(f"< to MCP SERVER > {format_json(message)}")
     # Log the request to the audit trail
     log_audit_event(
         "jsonrpc_message",
@@ -169,7 +176,8 @@ def send_message(
 
     response_line = process.stdout.readline()
     response = json.loads(response_line)
-    log_mcp(f"< from MCP SERVER > {format_json(response)}")
+    if log_communication:
+        log_mcp(f"< from MCP SERVER > {format_json(response)}")
     # Log the response to the audit trail
     log_audit_event(
         "jsonrpc_message",
@@ -211,16 +219,16 @@ def register_mcp_server() -> None:
             "clientInfo": {"name": "lab02-mcp-client", "version": "1.0.0"}
         }
     }
-    send_message(process, init_request)
+    send_message(process, init_request, log_communication=False)
 
     # 2. initialized notification
     log_app("Step 2/3: send initialized notification...")
-    send_message(process, {"jsonrpc": "2.0", "method": "notifications/initialized"})
+    send_message(process, {"jsonrpc": "2.0", "method": "notifications/initialized"}, log_communication=False)
 
     # 3. list tools
     log_app("Step 3/3: list tools of MCP Server...")
     tools_request = {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}
-    tools_response = send_message(process, tools_request)
+    tools_response = send_message(process, tools_request, log_communication=False)
 
     new_tools = 0
     if tools_response and "result" in tools_response and "tools" in tools_response["result"]:
